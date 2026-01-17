@@ -7,14 +7,40 @@ const cleanCSS = require('gulp-clean-css');
 const rename = require('gulp-rename');
 
 /**
- * Load config
+ * Load config (defensive)
  */
-const baseConfig = JSON.parse(fs.readFileSync('./config.json'));
-let localConfig = {};
+function loadJsonConfig(filePath, { required = false } = {}) {
+  if (!fs.existsSync(filePath)) {
+    if (required) {
+      throw new Error(
+        `\nERROR: Missing ${filePath}\n` +
+        `This file is required to run gulp.\n`
+      );
+    }
+    return {};
+  }
 
-if (fs.existsSync('./config-local.json')) {
-  localConfig = JSON.parse(fs.readFileSync('./config-local.json'));
+  const raw = fs.readFileSync(filePath, 'utf8').trim();
+
+  if (!raw) {
+    throw new Error(
+      `\nERROR: ${filePath} exists but is empty.\n` +
+      `Please provide valid JSON.\n`
+    );
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    throw new Error(
+      `\nERROR: ${filePath} contains invalid JSON:\n` +
+      `  ${err.message}\n`
+    );
+  }
 }
+
+const baseConfig = loadJsonConfig('./config.json', { required: true });
+const localConfig = loadJsonConfig('./config-local.json');
 
 const config = { ...baseConfig, ...localConfig };
 const themeName = config.themeName;
@@ -66,12 +92,11 @@ function buildScss() {
   return targetPaths.reduce((stream, basePath) => {
     const destPath = skinTarget(basePath);
 
-    // Compile SCSS to normal CSS
     return stream
       .pipe(sass().on('error', sass.logError))
-      .pipe(dest(destPath)) // Skin.css
-      .pipe(cleanCSS())     // Minify
-      .pipe(rename({ suffix: '.min' })) // Skin.min.css
+      .pipe(dest(destPath))
+      .pipe(cleanCSS())
+      .pipe(rename({ suffix: '.min' }))
       .pipe(dest(destPath));
   }, src('src/scss/**/*.scss'));
 }

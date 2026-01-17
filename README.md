@@ -101,13 +101,13 @@ npm install
 F. Build the theme once:
 
 ```bash / CMD
-gulp
+npx gulp
 ```
 
 G. Start watching for changes (optional, recommended for development):
 
 ```bash / CMD
-gulp watch
+npx gulp watch
 ```
 
 H. The compiled files (`Skin.css` and `Skin.min.css`) are now in `[targetPaths]/Skins/[themeName]`.
