@@ -41,7 +41,7 @@ This allows you to develop and update your theme without working directly inside
 
 * Values written as `[token]` are read from the configuration file
 * `[targetPaths]` can contain **one or more target locations**
-* The build process outputs **both normal and minified CSS** for skins
+* The build process outputs **minified CSS** for skins
 
 ### Build Output
 
@@ -49,8 +49,7 @@ For each `targetPath`:
 
 * **Skin files:** `[targetPaths]/Skins/[themeName]`
 
-  * `Skin.css` (compiled from SCSS)
-  * `Skin.min.css` (minified version)
+  * `Skin.css` (inified compiled from SCSS)
 * **Container files:** `[targetPaths]/Containers/[themeName]`
 
 ---
@@ -60,7 +59,7 @@ For each `targetPath`:
 * **Skin and Container folders**
   When a file is changed or added, all files in the target location are removed and replaced with the updated files.
 * **`src/scss` folder**
-  SCSS files are compiled into `Skin.css` and `Skin.min.css`.
+  SCSS files are compiled into `Skin.css`.
 
 ---
 
@@ -110,8 +109,8 @@ G. Start watching for changes (optional, recommended for development):
 npx gulp watch
 ```
 
-H. The compiled files (`Skin.css` and `Skin.min.css`) are now in `[targetPaths]/Skins/[themeName]`.
-Copy the **entire theme folder** (Skins + Containers) into your DNN installation when ready.
+H. The compiled file (`Skin.css` is now in `[targetPaths]/Skins/[themeName]`.
+
 
 ---
 
@@ -168,7 +167,7 @@ This diagram shows **where to place your files** for the build process to work c
 
 ## Notes
 
-* The build process generates **both `Skin.css` and `Skin.min.css`** automatically.
+* The generated a minified `Skin.css`.
 * You can copy the **entire theme folder** to **one or multiple DNN installations** depending on your `targetPaths`.
 * Recommended workflow for beginners:
 

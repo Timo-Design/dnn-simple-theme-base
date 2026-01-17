@@ -5,6 +5,7 @@ const del = require('del');
 const sass = require('gulp-sass')(require('sass'));
 const cleanCSS = require('gulp-clean-css');
 const rename = require('gulp-rename');
+const header = require('gulp-header');
 
 /**
  * Load config (defensive)
@@ -88,18 +89,22 @@ function copyContainers() {
 /**
  * SCSS build and minification
  */
+
 function buildScss() {
+  const cssComment = config.cssComment || ''; // fallback if not defined
+
   return targetPaths.reduce((stream, basePath) => {
     const destPath = skinTarget(basePath);
 
     return stream
-      .pipe(sass().on('error', sass.logError))
-      .pipe(dest(destPath))
-      .pipe(cleanCSS())
-      .pipe(rename({ suffix: '.min' }))
-      .pipe(dest(destPath));
+      .pipe(sass().on('error', sass.logError)) // compile SCSS
+      .pipe(cleanCSS())                        // minify
+      .pipe(header(cssComment + '\n'))         // add comment on top
+      .pipe(rename('skin.css'))                // force output filename
+      .pipe(dest(destPath));                   // write file
   }, src('src/scss/**/*.scss'));
 }
+
 
 /**
  * Watch
