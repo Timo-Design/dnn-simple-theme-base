@@ -6,6 +6,8 @@ const sass = require('gulp-sass')(require('sass'));
 const cleanCSS = require('gulp-clean-css');
 const rename = require('gulp-rename');
 const header = require('gulp-header');
+const concat = require('gulp-concat');
+const terser = require('gulp-terser'); 
 
 
 /**
@@ -85,7 +87,7 @@ function cleanContainers() {
 /**
  * Build to dist folder
  */
-function buildSkinsToToDist() {
+function buildSkinsToDist() {
   return src('skin/**/*')
     .pipe(dest(distSkinPath()));
 }
@@ -96,14 +98,28 @@ function buildContainersToDist() {
 }
 
 function buildScss() {
-  const cssComment = config.cssComment || '';
+  const generatedFileWarning = config.generatedFileWarning || '';
   return src('src/scss/**/*.scss')
     .pipe(sass().on('error', sass.logError))
     .pipe(cleanCSS())
-    .pipe(header(cssComment + '\n'))
+    .pipe(header(generatedFileWarning + '\n'))
     .pipe(rename('skin.css'))
     .pipe(dest(distSkinPath()));
 }
+
+
+function buildJs() {
+  // Check local config first, fall back to base config, then auto-detect
+  const jsFiles = localConfig.jsFiles || config.jsFiles || ['src/js/**/*.js'];
+  const generatedFileWarning = config.generatedFileWarning || '';
+  
+  return src(jsFiles)
+    .pipe(concat('skin.js'))
+    .pipe(terser())
+    .pipe(header(generatedFileWarning + '\n'))
+    .pipe(dest(distSkinPath()));
+}
+
 
 /**
  * Distribute from dist to target paths
@@ -134,34 +150,45 @@ function distributeContainers() {
  * Watch
  */
 function watchFiles() {
-  watch('skin/**/*', series(buildSkinsToToDist, cleanSkins, distributeSkins));
+  watch('skin/**/*', series(buildSkinsToDist, cleanSkins, distributeSkins));
   watch('container/**/*', series(buildContainersToDist, cleanContainers, distributeContainers));
   watch('src/scss/**/*.scss', series(buildScss, cleanSkins, distributeSkins));
+  watch('src/js/**/*.js', series(buildJs, cleanSkins, distributeSkins)); 
 }
 
 /**
  * Public tasks
  */
+// Watch and auto-distribute
+exports.watch = series(watchFiles);
+
 // Build everything to dist only
 exports.build = series(
   cleanDist,
-  buildSkinsToToDist,
+  buildSkinsToDist,
   buildContainersToDist,
   buildScss
 );
 
-// Build to dist AND distribute to target paths
-exports.distribute = series(
-  exports.build,
+// Quick distribute without rebuilding
+exports.sync = series(
   cleanSkins,
   cleanContainers,
   distributeSkins,
   distributeContainers
 );
 
-// Watch and auto-distribute
-exports.watch = series(exports.build, exports.distribute, watchFiles);
+// Build to dist AND distribute to target paths
+exports.distribute = series(
+  exports.build,
+  exports.sync
+);
 
+// Clean all output files
+exports.clean = series(cleanDist, cleanSkins, cleanContainers);
+
+// Full refresh: build, distribute and watch
+exports.init = series(exports.distribute, exports.watch);
 
 // Default: build to dist and distribute
 exports.default = exports.distribute;
