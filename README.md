@@ -9,7 +9,7 @@ It focuses on clarity and simplicity rather than advanced features.
 
 ## Status
 
-Work in progress / experimental
+Work in progress, feedback welcome
 
 ---
 
