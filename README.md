@@ -72,9 +72,11 @@ B. Download the source zip from GitHub.
 
 C. Unzip the folder **outside of any DNN installation**.
 
-D. Copy `config.json` to `config-local.json`
+D. Copy `config.json` to `config-local.json`  
+**Do not edit `config.json` directly** - this is the base template  
+Instead, override any settings you need in `config-local.json`  
 
-* **Update paths and theme name for your local setup.**
+* Update paths, theme name, and JS file order for your local setup
 * `targetPaths` can contain **one or more DNN installation skin paths**.
   * Each path should point to the DNN portal's folder where skins and containers reside:
     ```
