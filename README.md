@@ -25,7 +25,7 @@ This allows you to develop and update your theme without working directly inside
 ## Technology Used
 
 * Node.js
-* Gulp 4
+* Gulp 5
 
 ---
 
