@@ -168,8 +168,10 @@ vendors/
 ├─ bootstrap/
 │   ├─ bootstrap.min.css
 │   └─ bootstrap.bundle.min.js
-└─ jquery/
-    └─ jquery.min.js
+└─ bootstrap-icons/
+    ├─ bootstrap-icons.css
+    └─ fonts/
+        └─ bootstrap-icons.woff2
 ```
 
 Run `gulp` and these files will be copied to `_dist/Skins/[YourTheme]/vendors/`.
