@@ -148,6 +148,131 @@ JavaScript files are concatenated in the order specified in your `config-local.j
 }
 ```
 
+---
+
+## Managing Vendor Files (Bootstrap, jQuery, etc.)
+
+The `vendors/` folder is for **pre-built, production-ready** CSS and JavaScript files that don't need processing. These files are copied as-is to your distribution folder.
+
+### Key Concept
+
+- **`src/`** = Source files that will be compiled/processed (SCSS → CSS, multiple JS → bundled JS)
+- **`vendors/`** = Already processed files, copied as-is (minified CSS/JS libraries)
+
+### Option 1: Manual Vendor Files (Simplest)
+
+Download pre-built files and place them in the `vendors/` folder:
+
+```
+vendors/
+├─ bootstrap/
+│   ├─ bootstrap.min.css
+│   └─ bootstrap.bundle.min.js
+└─ jquery/
+    └─ jquery.min.js
+```
+
+Run `gulp` and these files will be copied to `_dist/Skins/[YourTheme]/vendors/`.
+
+Reference in your skin file:
+```aspx
+<%@ Register TagPrefix="dnn" Namespace="DotNetNuke.Web.Client.ClientResourceManagement" Assembly="DotNetNuke.Web.Client" %>
+<dnn:DnnCssInclude runat="server" FilePath="vendors/bootstrap/bootstrap.min.css" PathNameAlias="SkinPath" />
+<dnn:DnnJsInclude runat="server" ForceProvider="DnnFormBottomProvider" FilePath="vendors/bootstrap/bootstrap.bundle.min.js" PathNameAlias="SkinPath" />
+```
+
+### Option 2: Get Vendors from npm
+
+For automatic vendor management, configure npm packages in your `config-local.json`:
+
+**Step 1:** Install packages via npm
+```bash
+npm install bootstrap bootstrap-icons
+```
+
+**Step 2:** Configure in `config-local.json`
+```json
+{
+  "themeName": "MyTheme",
+  "npmVendors": {
+    "bootstrap": {
+      "package": "bootstrap",
+      "files": [
+        "dist/css/bootstrap.min.css",
+        "dist/css/bootstrap.min.css.map",
+        "dist/js/bootstrap.bundle.min.js",
+        "dist/js/bootstrap.bundle.min.js.map"
+      ]
+    },
+    "bootstrap-icons": {
+      "package": "bootstrap-icons",
+      "files": [
+        "font/bootstrap-icons.css",
+        "font/fonts/**/*"
+      ]
+    }
+  }
+}
+```
+
+**Step 3:** Run the vendor task
+```bash
+npx gulp vendors
+```
+
+This copies the specified files from `node_modules/` to your `vendors/` folder.
+
+**Step 4:** Build as usual
+```bash
+npx gulp
+```
+
+### Option 3: Custom Bootstrap via SCSS
+
+If you want to customize Bootstrap variables and compile it yourself:
+
+**Step 1:** Install Bootstrap
+```bash
+npm install bootstrap
+```
+
+**Step 2:** Import in your `src/scss/skin.scss`
+```scss
+// Override Bootstrap variables
+$primary: #your-color;
+$font-family-base: 'Your Font';
+
+// Import Bootstrap
+@import "../../node_modules/bootstrap/scss/bootstrap";
+
+// Your custom styles
+.my-custom-class {
+  // ...
+}
+```
+
+**Step 3:** Build
+```bash
+npx gulp
+```
+
+Bootstrap will be compiled directly into your `skin.css` file.
+
+### Which Option to Choose?
+
+- **New to web development?** → Use Option 1 (manual files)
+- **Want version control for vendors?** → Use Option 2 (npm)
+- **Need customized Bootstrap?** → Use Option 3 (SCSS import)
+- **Want Bootstrap bundled with your CSS?** → Use Option 3
+- **Want Bootstrap as a separate file?** → Use Option 1 or 2
+
+### Gulp Tasks for Vendors
+
+- **`gulp vendors`** - Copy vendor files from node_modules to vendors/ folder
+- **`gulp refresh`** - Get vendors from npm, then build everything
+- **`gulp`** - Regular build (includes copying from vendors/ to dist)
+
+
 **Important:** Order matters for JavaScript dependencies. Libraries like jQuery should come before plugins that depend on them.
 
 If `jsFiles` is not specified, all files in `src/js/**/*.js` will be included (though order may not be predictable).
