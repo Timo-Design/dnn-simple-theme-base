@@ -107,7 +107,6 @@ function buildScss() {
     .pipe(dest(distSkinPath()));
 }
 
-
 function buildJs() {
   // Check local config first, fall back to base config, then auto-detect
   const jsFiles = localConfig.jsFiles || config.jsFiles || ['src/js/**/*.js'];
@@ -120,6 +119,56 @@ function buildJs() {
     .pipe(dest(distSkinPath()));
 }
 
+/**
+ * Vendor management tasks
+ */
+
+// Copy pre-built vendor files from vendors/ folder to dist
+function copyVendors() {
+  // Check if vendors folder exists
+  if (!fs.existsSync('vendors')) {
+    console.log('No vendors folder found, skipping vendor copy.');
+    return Promise.resolve();
+  }
+  
+  return src('vendors/**/*')
+    .pipe(dest(`${distSkinPath()}/vendors`));
+}
+
+// Copy specific files from node_modules to vendors/ folder
+function getVendorsFromNpm() {
+  const npmVendors = config.npmVendors || localConfig.npmVendors;
+  
+  if (!npmVendors || Object.keys(npmVendors).length === 0) {
+    console.log('No npmVendors configured, skipping npm vendor copy.');
+    return Promise.resolve();
+  }
+  
+  const tasks = [];
+  
+  Object.entries(npmVendors).forEach(([vendorName, vendorConfig]) => {
+    const basePath = `node_modules/${vendorConfig.package}`;
+    
+    // Check if package exists in node_modules
+    if (!fs.existsSync(basePath)) {
+      console.warn(`Warning: Package '${vendorConfig.package}' not found in node_modules. Run 'npm install' first.`);
+      return;
+    }
+    
+    vendorConfig.files.forEach(filePattern => {
+      tasks.push(
+        src(`${basePath}/${filePattern}`, { encoding: false })
+          .pipe(dest(`vendors/${vendorName}`))
+      );
+    });
+  });
+  
+  if (tasks.length === 0) {
+    return Promise.resolve();
+  }
+  
+  return Promise.all(tasks);
+}
 
 /**
  * Distribute from dist to target paths
@@ -153,7 +202,8 @@ function watchFiles() {
   watch('skin/**/*', series(buildSkinsToDist, cleanSkins, distributeSkins));
   watch('container/**/*', series(buildContainersToDist, cleanContainers, distributeContainers));
   watch('src/scss/**/*.scss', series(buildScss, cleanSkins, distributeSkins));
-  watch('src/js/**/*.js', series(buildJs, cleanSkins, distributeSkins)); 
+  watch('src/js/**/*.js', series(buildJs, cleanSkins, distributeSkins));
+  watch('vendors/**/*', series(copyVendors, cleanSkins, distributeSkins));
 }
 
 /**
@@ -167,7 +217,9 @@ exports.build = series(
   cleanDist,
   buildSkinsToDist,
   buildContainersToDist,
-  buildScss
+  buildScss,
+  buildJs,
+  copyVendors
 );
 
 // Quick distribute without rebuilding
@@ -186,6 +238,12 @@ exports.distribute = series(
 
 // Clean all output files
 exports.clean = series(cleanDist, cleanSkins, cleanContainers);
+
+// Get vendor files from npm packages
+exports.vendors = series(getVendorsFromNpm);
+
+// Get vendors from npm, then build everything
+exports.refresh = series(getVendorsFromNpm, exports.build);
 
 // Full refresh: build, distribute and watch
 exports.init = series(exports.distribute, exports.watch);
